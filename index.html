@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fractional AI — Client Feedback Survey</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Fractional AI Brand Tokens ────────────────────────── */
+    :root {
+      --bg:           #070719;
+      --surface:      #10102d;
+      --surface-2:    #161d39;
+      --border:       rgba(255,255,255,0.08);
+      --blue:         #1d90f9;
+      --blue-hover:   #187ce0;
+      --accent:       #6ab8ff;
+      --text:         #ffffff;
+      --text-muted:   rgba(255,255,255,0.55);
+      --red:          #f94444;
+      --yellow:       #f9c844;
+      --green:        #44c96e;
+      --radius:       12px;
+      --radius-sm:    8px;
+      --transition:   0.2s ease;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Manrope', 'Avenir', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    /* ── Glowing background blobs ───────────────────────────── */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 600px; height: 600px;
+      top: -200px; left: -200px;
+      background: radial-gradient(circle, rgba(29,144,249,0.12) 0%, transparent 70%);
+    }
+    body::after {
+      width: 500px; height: 500px;
+      bottom: -150px; right: -150px;
+      background: radial-gradient(circle, rgba(106,184,255,0.08) 0%, transparent 70%);
+    }
+
+    /* ── Card ───────────────────────────────────────────────── */
+    .card {
+      position: relative; z-index: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 48px 40px;
+      width: 100%;
+      max-width: 640px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(29,144,249,0.08);
+    }
+
+    /* ── Logo ───────────────────────────────────────────────── */
+    .logo-wrap { text-align: center; margin-bottom: 32px; }
+    .logo-wrap img { height: 32px; object-fit: contain; filter: brightness(1.1); }
+
+    /* ── Progress bar ───────────────────────────────────────── */
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 36px;
+    }
+    .progress-track {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue), var(--accent));
+      border-radius: 99px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .progress-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Step ───────────────────────────────────────────────── */
+    .step { display: none; animation: fadeUp 0.35s ease; }
+    .step.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 10px;
+    }
+
+    .step-question {
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .step-hint {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    /* ── NPS grid ───────────────────────────────────────────── */
+    .nps-grid {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .nps-btn {
+      aspect-ratio: 1;
+      border: 1.5px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .nps-btn:hover { border-color: var(--blue); color: var(--text); transform: translateY(-2px); }
+    .nps-btn.selected { color: #fff; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .nps-btn.selected.detractor { background: var(--red);    border-color: var(--red); }
+    .nps-btn.selected.passive   { background: var(--yellow); border-color: var(--yellow); color: #1a1a1a; }
+    .nps-btn.selected.promoter  { background: var(--green);  border-color: var(--green); }
+
+    .nps-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ── Star rating ─────────────────────────────────────────── */
+    .star-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .star-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      transition: transform 0.15s ease;
+    }
+    .star-btn:hover { transform: scale(1.15); }
+    .star-btn svg { display: block; }
+    .star-btn .star-outline { fill: var(--surface-2); stroke: var(--border); stroke-width: 2; }
+    .star-btn .star-fill { fill: transparent; transition: fill 0.15s ease; }
+    .star-btn.active .star-fill { fill: #f9c844; }
+    .star-btn.active .star-outline { stroke: #f9c844; }
+
+    .rating-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      min-height: 18px;
+      transition: color 0.2s;
+    }
+
+    /* ── Textarea ────────────────────────────────────────────── */
+    textarea {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 15px;
+      line-height: 1.6;
+      padding: 16px;
+      resize: vertical;
+      min-height: 120px;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    textarea::placeholder { color: var(--text-muted); }
+    textarea:focus { border-color: var(--blue); }
+
+    /* ── Text / Email inputs ─────────────────────────────── */
+    .input-group { margin-bottom: 16px; }
+    .input-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    input[type="text"],
+    input[type="email"] {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 15px;
+      padding: 13px 16px;
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    input[type="text"]::placeholder,
+    input[type="email"]::placeholder { color: var(--text-muted); }
+    input[type="text"]:focus,
+    input[type="email"]:focus { border-color: var(--blue); }
+
+    /* ── Buttons ─────────────────────────────────────────────── */
+    .btn-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 36px;
+      gap: 12px;
+    }
+
+    .btn {
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 13px 28px;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .btn-primary {
+      background: var(--blue);
+      color: #fff;
+      flex: 1;
+    }
+    .btn-primary:hover { background: var(--blue-hover); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(29,144,249,0.35); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1.5px solid var(--border);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+
+    /* ── Thank you screen ────────────────────────────────────── */
+    .thankyou { text-align: center; padding: 24px 0 8px; }
+    .thankyou .icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, var(--blue), var(--accent));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+      box-shadow: 0 8px 32px rgba(29,144,249,0.4);
+    }
+    .thankyou h2 { font-size: 28px; font-weight: 700; margin-bottom: 12px; }
+    .thankyou p { color: var(--text-muted); font-size: 16px; line-height: 1.6; max-width: 400px; margin: 0 auto; }
+
+    /* ── Error message ───────────────────────────────────────── */
+    .error-msg {
+      display: none;
+      background: rgba(249,68,68,0.12);
+      border: 1px solid rgba(249,68,68,0.3);
+      color: #ff8080;
+      font-size: 13px;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      margin-top: 12px;
+    }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 540px) {
+      .card { padding: 32px 24px 28px; }
+      .step-question { font-size: 18px; }
+      .nps-grid { gap: 4px; }
+      .nps-btn { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- Logo -->
+  <div class="logo-wrap">
+    <img
+      src="https://cdn.prod.website-files.com/660bf72182cac0a358606886/68b6e7bb11d14b6ab6c75531_Fractional%20AI%20Logo%20(new).png"
+      alt="Fractional AI"
+    />
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel">1 of 6</div>
+  </div>
+
+  <!-- ── Step 1: Client info ──────────────────────────── -->
+  <div class="step active" id="step-1">
+    <div class="step-label">About You</div>
+    <div class="step-question">Before we begin, who's filling this in?</div>
+    <div class="step-hint">This helps us connect your feedback to the right project.</div>
+    <div style="margin-top: 28px;">
+      <div class="input-group">
+        <label class="input-label" for="clientNameInput">Your name</label>
+        <input type="text" id="clientNameInput" placeholder="Jane Smith" autocomplete="name" />
+      </div>
+      <div class="input-group">
+        <label class="input-label" for="clientEmailInput">Your email</label>
+        <input type="email" id="clientEmailInput" placeholder="jane@company.com" autocomplete="email" />
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Step 2: NPS ──────────────────────────────────── -->
+  <div class="step" id="step-2">
+    <div class="step-label">Recommendation</div>
+    <div class="step-question">How likely are you to recommend Fractional AI to a colleague or peer?</div>
+    <div class="step-hint">0 = Not at all likely &nbsp;·&nbsp; 10 = Extremely likely</div>
+    <div class="nps-grid" id="npsGrid"></div>
+    <div class="nps-labels">
+      <span>Not likely</span>
+      <span>Extremely likely</span>
+    </div>
+  </div>
+
+  <!-- ── Step 3: Overall satisfaction ────────────────── -->
+  <div class="step" id="step-3">
+    <div class="step-label">Overall Experience</div>
+    <div class="step-question">How would you rate your overall project experience with us?</div>
+    <div class="step-hint">Tap a star to rate from 1 (poor) to 5 (excellent)</div>
+    <div class="star-row" id="stars-3"></div>
+    <div class="rating-label" id="ratingLabel-3"></div>
+  </div>
+
+  <!-- ── Step 4: Team performance ────────────────────── -->
+  <div class="step" id="step-4">
+    <div class="step-label">Team Performance</div>
+    <div class="step-question">How would you rate our team's expertise, communication, and responsiveness?</div>
+    <div class="step-hint">Tap a star to rate from 1 (poor) to 5 (excellent)</div>
+    <div class="star-row" id="stars-4"></div>
+    <div class="rating-label" id="ratingLabel-4"></div>
+  </div>
+
+  <!-- ── Step 5: Outcome ──────────────────────────────── -->
+  <div class="step" id="step-5">
+    <div class="step-label">Outcome</div>
+    <div class="step-question">Did our solution effectively address the problems it was intended to solve?</div>
+    <div class="step-hint">Tap a star to rate from 1 (not at all) to 5 (completely)</div>
+    <div class="star-row" id="stars-5"></div>
+    <div class="rating-label" id="ratingLabel-5"></div>
+  </div>
+
+  <!-- ── Step 6: Open feedback ────────────────────────── -->
+  <div class="step" id="step-6">
+    <div class="step-label">Open Feedback</div>
+    <div class="step-question">What's one thing we did well — and one thing we could improve?</div>
+    <div class="step-hint">This helps us get better with every project.</div>
+    <textarea id="openFeedback" placeholder="Share your thoughts here…" rows="5"></textarea>
+  </div>
+
+  <!-- ── Thank you ────────────────────────────────────── -->
+  <div class="step" id="step-thanks">
+    <div class="thankyou">
+      <div class="icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <h2>Thank you, <span id="clientName">valued client</span>!</h2>
+      <p>Your feedback helps us continuously improve and deliver better results for you. We genuinely appreciate you taking the time.</p>
+    </div>
+  </div>
+
+  <!-- Nav buttons -->
+  <div class="btn-row" id="navRow">
+    <button class="btn btn-ghost" id="btnBack" onclick="goBack()" style="display:none">← Back</button>
+    <button class="btn btn-primary" id="btnNext" onclick="goNext()" disabled>Continue</button>
+  </div>
+
+  <!-- Error -->
+  <div class="error-msg" id="errorMsg">Something went wrong submitting your response. Please try again.</div>
+
+</div>
+
+<script>
+  /* ───────────────────────────────────────────────────────
+     State
+  ─────────────────────────────────────────────────────── */
+  const TOTAL_STEPS = 6;
+  let currentStep = 1;
+  const answers = { name: '', email: '', nps: null, overall: null, team: null, outcome: null, feedback: "" };
+
+  const starLabels    = { 1: "Poor", 2: "Fair", 3: "Good", 4: "Very good", 5: "Excellent" };
+  const outcomeLabels = { 1: "Not at all", 2: "Slightly", 3: "Mostly", 4: "Significantly", 5: "Completely" };
+
+  /* ───────────────────────────────────────────────────────
+     Init
+  ─────────────────────────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', () => {
+    buildNPS();
+    buildStars('stars-3', 'overall', starLabels,    'ratingLabel-3');
+    buildStars('stars-4', 'team',    starLabels,    'ratingLabel-4');
+    buildStars('stars-5', 'outcome', outcomeLabels, 'ratingLabel-5');
+
+    document.getElementById('clientNameInput').addEventListener('input', () => {
+      answers.name = document.getElementById('clientNameInput').value.trim();
+      updateNextBtn();
+    });
+    document.getElementById('clientEmailInput').addEventListener('input', () => {
+      answers.email = document.getElementById('clientEmailInput').value.trim();
+      updateNextBtn();
+    });
+
+    document.getElementById('openFeedback').addEventListener('input', () => {
+      answers.feedback = document.getElementById('openFeedback').value;
+      updateNextBtn();
+    });
+
+    updateProgress();
+    updateNextBtn();
+  });
+
+  /* ───────────────────────────────────────────────────────
+     NPS
+  ─────────────────────────────────────────────────────── */
+  function buildNPS() {
+    const grid = document.getElementById('npsGrid');
+    for (let i = 0; i <= 10; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'nps-btn';
+      btn.textContent = i;
+      btn.dataset.val = i;
+      btn.addEventListener('click', () => selectNPS(i, btn));
+      grid.appendChild(btn);
+    }
+  }
+
+  function selectNPS(val, btn) {
+    answers.nps = val;
+    document.querySelectorAll('.nps-btn').forEach(b =>
+      b.classList.remove('selected', 'detractor', 'passive', 'promoter')
+    );
+    btn.classList.add('selected', val <= 6 ? 'detractor' : val <= 8 ? 'passive' : 'promoter');
+    updateNextBtn();
+  }
+
+  /* ───────────────────────────────────────────────────────
+     Stars
+  ─────────────────────────────────────────────────────── */
+  function buildStars(containerId, key, labels, labelId) {
+    const row = document.getElementById(containerId);
+    for (let i = 1; i <= 5; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'star-btn';
+      btn.dataset.val = i;
+      btn.innerHTML = `
+        <svg width="44" height="44" viewBox="0 0 24 24">
+          <polygon class="star-outline" points="12,2 15.1,8.3 22,9.3 17,14.1 18.2,21 12,17.8 5.8,21 7,14.1 2,9.3 8.9,8.3"/>
+          <polygon class="star-fill"    points="12,2 15.1,8.3 22,9.3 17,14.1 18.2,21 12,17.8 5.8,21 7,14.1 2,9.3 8.9,8.3"/>
+        </svg>`;
+      btn.addEventListener('click',      () => selectStar(containerId, key, i, labels, labelId));
+      btn.addEventListener('mouseenter', () => hoverStars(containerId, i, labels, labelId));
+      row.addEventListener('mouseleave', () => restoreStars(containerId, key, labels, labelId));
+      row.appendChild(btn);
+    }
+  }
+
+  function selectStar(cId, key, val, labels, labelId) {
+    answers[key] = val;
+    updateStars(cId, val);
+    document.getElementById(labelId).textContent = labels[val] || '';
+    document.getElementById(labelId).style.color = '#ffffff';
+    updateNextBtn();
+  }
+
+  function hoverStars(cId, val, labels, labelId) {
+    updateStars(cId, val);
+    document.getElementById(labelId).textContent = labels[val] || '';
+    document.getElementById(labelId).style.color = 'var(--text-muted)';
+  }
+
+  function restoreStars(cId, key, labels, labelId) {
+    const saved = answers[key];
+    updateStars(cId, saved || 0);
+    document.getElementById(labelId).textContent = saved ? labels[saved] : '';
+    document.getElementById(labelId).style.color = saved ? '#ffffff' : 'var(--text-muted)';
+  }
+
+  function updateStars(cId, val) {
+    document.querySelectorAll(`#${cId} .star-btn`).forEach(btn =>
+      btn.classList.toggle('active', parseInt(btn.dataset.val) <= val)
+    );
+  }
+
+  /* ───────────────────────────────────────────────────────
+     Navigation
+  ─────────────────────────────────────────────────────── */
+  function goNext() {
+    if (!isStepValid()) return;
+    if (currentStep === TOTAL_STEPS) { submitSurvey(); return; }
+    showStep(currentStep + 1);
+  }
+
+  function goBack() {
+    if (currentStep > 1) showStep(currentStep - 1);
+  }
+
+  function showStep(n) {
+    document.getElementById(`step-${currentStep}`).classList.remove('active');
+    currentStep = n;
+    if (n > TOTAL_STEPS) {
+      document.getElementById('step-thanks').classList.add('active');
+      document.getElementById('progressWrap').style.display = 'none';
+      document.getElementById('navRow').style.display = 'none';
+      return;
+    }
+    document.getElementById(`step-${n}`).classList.add('active');
+    document.getElementById('btnBack').style.display = n > 1 ? '' : 'none';
+    document.getElementById('btnNext').textContent = n === TOTAL_STEPS ? 'Submit' : 'Continue';
+    updateProgress();
+    updateNextBtn();
+  }
+
+  function updateProgress() {
+    const pct = ((currentStep - 1) / TOTAL_STEPS) * 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = `${currentStep} of ${TOTAL_STEPS}`;
+  }
+
+  function isStepValid() {
+    if (currentStep === 1) {
+      const email = answers.email;
+      const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      return answers.name.length > 0 && validEmail;
+    }
+    if (currentStep === 2) return answers.nps !== null;
+    if (currentStep === 3) return answers.overall !== null;
+    if (currentStep === 4) return answers.team !== null;
+    if (currentStep === 5) return answers.outcome !== null;
+    return true; // step 6 (open feedback) is optional
+  }
+
+  function updateNextBtn() {
+    document.getElementById('btnNext').disabled = !isStepValid();
+  }
+
+  /* ───────────────────────────────────────────────────────
+     Submit — POSTs to Cloudflare Pages Function.
+     No secrets in this file. Token lives in Cloudflare env vars.
+  ─────────────────────────────────────────────────────── */
+  async function submitSurvey() {
+    const btn = document.getElementById('btnNext');
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    const timestamp  = new Date().toISOString();
+
+    // Update thank-you screen with their first name
+    const firstName = answers.name.split(' ')[0] || 'valued client';
+    document.getElementById('clientName').textContent = firstName;
+
+    const payload = {
+      timestamp,
+      client_name:        answers.name,
+      client_email:       answers.email,
+      nps_score:          answers.nps,
+      overall_experience: answers.overall,
+      team_performance:   answers.team,
+      solution_outcome:   answers.outcome,
+      open_feedback:      answers.feedback,
+      survey_source:      window.location.href,
+    };
+
+    try {
+      const res = await fetch('/submit', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+      showStep(TOTAL_STEPS + 1);
+
+    } catch (err) {
+      console.error(err);
+      document.getElementById('errorMsg').style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Submit';
+    }
+  }
+</script>
+</body>
+</html>
